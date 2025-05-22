@@ -42,8 +42,8 @@ db.cafes.insertMany([
     peso: 240,
     intensidad: "media",
     precio: [
-      { tipo: "efectivo", precio: 520 },
-      { tipo: "tarjeta", precio: 570 }
+      { tipo: "efectivo", precio: 420 },
+      { tipo: "tarjeta", precio: 470 }
     ],
     contieneLeche: false,
     tostador: {
@@ -58,8 +58,8 @@ db.cafes.insertMany([
     peso: 210,
     intensidad: "baja",
     precio: [
-      { tipo: "efectivo", precio: 460 },
-      { tipo: "tarjeta", precio: 500 }
+      { tipo: "efectivo", precio: 360 },
+      { tipo: "tarjeta", precio: 400 }
     ],
     contieneLeche: true,
     tostador: {
@@ -178,7 +178,7 @@ db.cafes.find(
 
 //3) Buscar cuántos cafés son de tipo “cold brew”· y contienen “vainilla” entre sus ingredientes.
 
-db.cafes.countDocuments({tipo:"cold brew",ingredientes:"vainilla"})
+db.cafes.find({tipo:"cold brew",ingredientes:"vainilla"}).count()
 
 //4) Listar tipo y peso de los cafés que tienen una intensidad “media”.
 
@@ -188,10 +188,36 @@ db.cafes.find({intensidad:"media"},{tipo:1,peso:1,_id:0})
 
 db.cafes.find({peso:{$gte:200,$lte:260}},{tipo:1,peso:1,intensidad:1,_id:0})
 
-db.cafes.aggregate(
-    {$match:{peso:{$gte:200,$lte:260}}},
-    {$project:{tipo:1,peso:1,intensidad:1,_id:0}})
 
+
+//6) Mostrar los cafés que fueron tostados en localidades que contengan “san”, permitiendo buscar por “san” y que se muestren también los de “santos”, “san justo”, etc. Ordenar el resultado por peso de manera descendente.
+
+db.cafes.aggregate([
+    {$match:{"tostador.localidad":{$regex:/san/i}}},
+    {$sort:{peso:-1}},
+    {$project:{"tostador.localidad":1,_id:0}}
+])
+
+//7) Mostrar la sumar del peso de cada tipo de Café.
+
+db.cafes.aggregate([{
+    $group:{_id:"$tipo",pesoTotal:{$sum:"$peso"}}
+}])
+
+
+//8) Agregar el ingrediente “whisky” todos los cafés cuya intensidad es alta.
+
+db.cafes.updateMany({intensidad:"alta" },{$addToSet:{ingrediente:"whisky"}})
+
+
+//9) Sumarle 10 al peso de los cafés cuyo peso se encuentre entre 200 y 260 inclusive.
+
+db.cafes.updateMany({peso:{$gte:200,$lte:260}},{$inc:{peso:10}})
+
+//10) Eliminar los cafés cuyo peso sea menor o igual a 210.
+
+
+db.cafes.deleteMany({peso:{$lte:210}})
 
 
 
